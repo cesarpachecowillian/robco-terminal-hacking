@@ -64,6 +64,7 @@ export const END_PAUSE_WON_MS  = 500;
 export const END_PAUSE_LOST_MS = 400;
 export const END_TITLE_PAUSE_MS = 120;
 export const FLICKER_MS      = 70;
+export const MENU_ARM_MS     = 3000;   // touch MENU button: window for the confirming second tap
 
 /**
  * Text of a difficulty menu button (label padded with non-breaking spaces).
@@ -73,6 +74,16 @@ export const FLICKER_MS      = 70;
  */
 export function menuLabel(d, idx) {
   return `[${idx + 1}] ${d.label.padEnd(14, '\u00A0')} ${d.desc}`;
+}
+
+/**
+ * The pieces of menuLabel, so touch can drop key and padding: `${key} ${name}${pad} ${desc}`.
+ * @param {Difficulty} d
+ * @param {number} idx  0-based position in the menu
+ * @returns {{key: string, name: string, pad: string, desc: string}}
+ */
+export function menuParts(d, idx) {
+  return { key: `[${idx + 1}]`, name: d.label, pad: '\u00A0'.repeat(Math.max(0, 14 - d.label.length)), desc: d.desc };
 }
 
 /** Flavor texts shown (one at random) on the win screen. */

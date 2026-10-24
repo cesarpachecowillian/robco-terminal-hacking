@@ -1,6 +1,6 @@
 // Serialized log queue: lines type out one after another in #history-log.
-import { LOG_MAX_LINES, SR_MAX_LINES, TYPE_LOG_MS } from './config.js';
-import { $ } from './dom.js';
+import { LOG_MAX_LINES, TYPE_LOG_MS } from './config.js';
+import { $, announce } from './dom.js';
 import { GEN, LQ, setSkip } from './state.js';
 import { typeEl } from './anim.js';
 
@@ -40,9 +40,5 @@ async function emitLine(text, alive) {
   while (log.children.length > LOG_MAX_LINES) log.removeChild(log.firstChild);
   await typeEl(el, text, TYPE_LOG_MS, alive);
   if (!alive()) return;
-  const live = $('sr-live');
-  const d = document.createElement('div');
-  d.textContent = text;
-  live.appendChild(d);
-  while (live.children.length > SR_MAX_LINES) live.removeChild(live.firstChild);
+  announce(text);
 }

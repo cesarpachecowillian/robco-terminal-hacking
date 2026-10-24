@@ -2,7 +2,7 @@
 import { ensureAudio, loadSamples } from './audio.js';
 import { powerOn } from './screens.js';
 import { showDifficultyScreen } from './flow.js';
-import { bindEndHover, bindDocumentInput, bindGridInput, bindEndButtons } from './input.js';
+import { bindEndHover, bindDocumentInput, bindGridInput, bindEndButtons, bindTouchBar } from './input.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   ensureAudio();
@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bindDocumentInput();
   bindGridInput();
   bindEndButtons();
+  bindTouchBar();
 
   powerOn();
   showDifficultyScreen();

@@ -1,8 +1,14 @@
 # RobCo Termlink — minigame de hacking de terminal
 
-Minigame de navegador inspirado nos terminais retrô de fósforo verde: descubra a
-senha certa entre palavras escondidas num dump de memória, usando as dicas de
-**semelhança** que o terminal devolve a cada tentativa errada.
+Minigame de navegador inspirado no minigame de hacking de terminais da
+franquia **Fallout**: descubra a senha certa entre palavras escondidas num dump
+de memória, usando as dicas de **semelhança** que o terminal devolve a cada
+tentativa errada.
+
+> Projeto de fã, sem fins comerciais e sem afiliação com a Bethesda Softworks
+> ou a ZeniMax Media. Fallout é marca registrada de seus respectivos donos.
+> O código e os sons deste repositório são originais; nomes como RobCo e
+> Termlink são referências ao universo da franquia.
 
 Feito em **JavaScript puro (ES modules)**, sem frameworks e sem etapa de build.
 A interface é em português; as palavras do dump são em inglês.
@@ -33,10 +39,20 @@ A interface é em português; as palavras do dump são em inglês.
 | Onde | Teclado | Mouse / toque |
 |---|---|---|
 | Menu | `↑` `↓` + `Enter`, ou `1`–`5` | clique na opção |
-| Grade | setas movem o cursor, `Enter` seleciona | passe o mouse e clique; no toque, 1º toque marca, 2º confirma |
+| Grade | setas movem o cursor, `Enter` seleciona | passe o mouse e clique; no toque, 1º toque marca, 2º toque ou ENVIAR confirma |
 | Animações | qualquer tecla pula | clique pula |
-| Jogo em andamento | `Esc` volta ao menu | — |
+| Jogo em andamento | `Esc` volta ao menu | botão MENU (toque duas vezes) |
 | Tela final | `R` reinicia, `D` troca a dificuldade | botões na tela |
+
+### No celular
+
+Em telas de toque o jogo troca os rótulos de teclado por botões (`MENU` e
+`ENVIAR`), aumenta a área de toque das palavras e se adapta à tela em pé ou
+deitada, inclusive em tablets. No Android, o aparelho vibra a cada resultado.
+
+Para jogar em tela cheia, como um app: no navegador do celular, abra o menu e
+escolha **Adicionar à tela inicial** (no iPhone, *Compartilhar → Adicionar à
+Tela de Início*).
 
 ## Executando
 
@@ -89,8 +105,12 @@ src/
   actions.js          tentativa de senha e uso de colchetes
   render.js cursor.js anim.js log.js screens.js end.js   interface
   input.js            teclado, mouse e toque
+  touchbar.js         botão MENU da barra de toque (confirmação em dois toques)
+  haptics.js          vibração no celular (quando suportada)
+  wakelock.js         mantém a tela acesa durante a partida no celular
   audio.js            motor de áudio (amostras + síntese)
   audio-manifest.js   leitura do manifest de sons (pura)
+manifest.json icons/  app instalável (PWA): nome, ícones, tela cheia
 sounds/               gravação, manifest e documentação dos sons
 tests/                testes unitários (bun test)
 ```

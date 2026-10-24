@@ -2,7 +2,7 @@ import { test, expect } from 'bun:test';
 import {
   DIFF, JUNK, BRACKET_PAIRS, ROWS, COLS, TOTAL, UINT32, REPLENISH_CHANCE, GRID_RELAX_AFTER,
   BRACKET_ATTEMPTS, BRACKET_INNER_MIN, BRACKET_INNER_MAX, HEX_BASE_MIN, HEX_BASE_MAX,
-  LOG_MAX_LINES, SR_MAX_LINES, LORE, menuLabel, MSG_PROMPT, MSG_ALERT
+  LOG_MAX_LINES, SR_MAX_LINES, LORE, menuLabel, menuParts, MSG_PROMPT, MSG_ALERT
 } from '../src/config.js';
 import { createHash } from 'node:crypto';
 import fixture from './fixtures/grids-baseline.json';
@@ -40,6 +40,13 @@ test('junk has no brackets or dots; pairs are matched', () => {
 test('LORE text equals the baseline', () => {
   expect(LORE.length).toBe(8);
   expect(createHash('sha256').update(JSON.stringify(LORE)).digest('hex')).toBe(fixture.loreHash);
+});
+
+test('menuParts recompose exactly into menuLabel', () => {
+  Object.values(DIFF).forEach((d, i) => {
+    const p = menuParts(d, i);
+    expect(`${p.key} ${p.name}${p.pad} ${p.desc}`).toBe(menuLabel(d, i));
+  });
 });
 
 test('menuLabel pads with NBSP, exactly as the baseline', () => {

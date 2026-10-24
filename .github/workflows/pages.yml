@@ -34,7 +34,7 @@ jobs:
       - name: Assemble site (only what the game serves)
         run: |
           mkdir _site
-          cp -r index.html styles.css src sounds _site/
+          cp -r index.html styles.css manifest.json icons src sounds _site/
           rm -f _site/sounds/README.md
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

@@ -18,6 +18,7 @@ html, body {
   height: 100%;
   background: #000;
   overflow: hidden;
+  overscroll-behavior: none;   /* no pull-to-refresh / rubber-band mid-game */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -59,7 +60,13 @@ html, body {
     0 0 2.5em rgba(43, 214, 22, 0.16),
     inset 0 0 4em rgba(0, 0, 0, 0.85);
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
+
+/* Touch-only copy: hidden everywhere; the coarse-pointer block turns it on */
+.touch-only { display: none; }
 
 /* Scanlines + vignette + flicker (opacity animated on overlay only) */
 .crt-fx {
@@ -397,11 +404,19 @@ html, body {
   outline: none;
 }
 
-#end-btns button:hover,
 #end-btns button:focus-visible {
   background: var(--green);
   color: var(--bg);
   text-shadow: none;
+}
+
+/* hover only where it exists (touch browsers leave :hover stuck after a tap) */
+@media (hover: hover) {
+  #end-btns button:hover {
+    background: var(--green);
+    color: var(--bg);
+    text-shadow: none;
+  }
 }
 
 #end-screen.won  #end-title { text-shadow: 0 0 6px var(--green-glow), 0 0 14px var(--green-glow); }
@@ -463,6 +478,271 @@ html, body {
   .hex-addr { display: none; }
   .grid-row { gap: 0; }
   #grid-area { gap: 1.5ch; }
+}
+
+/* ── TOUCH (primary pointer is coarse) ───────────────────────────────────── */
+
+@media (pointer: coarse) {
+  .kbd-only   { display: none; }
+  .touch-only { display: inline; }   /* beats the UA [hidden] rule */
+
+  /* menu: name on line 1, dim description on line 2, 44px+ tap target */
+  #diff-list { gap: 0.35em; align-self: stretch; }
+  .diff-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.2em 1ch;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .opt-name { display: block; }
+  .opt-desc {
+    display: block;
+    font-size: 0.8em;
+    color: var(--green-mid);
+  }
+  .diff-option.hl .opt-desc,
+  .diff-option:focus-visible .opt-desc {
+    color: var(--bg);
+    opacity: 0.75;
+  }
+  .tap-hint { display: inline; margin-left: 1.5ch; color: var(--green-mid); }
+  .tap-hint[hidden] { display: none; }   /* display above beats the UA [hidden] rule */
+
+  /* press feedback on tappable cells (instant; the .cell fade is off under reduced motion) */
+  .cell.word:active,
+  .cell.bracket:active {
+    background: var(--green-mid);
+    color: var(--bg);
+    text-shadow: none;
+  }
+
+  /* end screen: bordered, finger-sized buttons; :active replaces :hover */
+  #end-btns { gap: 0.6em 1.5ch; width: 100%; }
+  #end-btns button {
+    flex: 1 1 14ch;
+    max-width: 24ch;
+    min-height: 48px;
+    padding: 0.2em 1.5ch;
+    border: 1px solid var(--green-mid);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #end-btns button:active {
+    background: var(--green);
+    color: var(--bg);
+    text-shadow: none;
+  }
+
+  /* in-game bar: MENU (tap twice to leave) + ENVIAR (confirm selection) */
+  #touch-bar {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 0.6em;
+    min-height: 44px;
+    margin-top: 8px;
+    touch-action: manipulation;
+  }
+  #menu-btn,
+  #send-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 1.5ch;
+    background: transparent;
+    border: 1px solid var(--green-mid);
+    border-radius: 0;
+    font: inherit;
+    line-height: 1;
+    color: var(--green);
+    text-shadow: inherit;
+    cursor: pointer;
+    outline: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #menu-btn { flex: 0 0 auto; color: var(--green-mid); }
+  #send-btn { flex: 1 1 auto; }
+  #menu-btn:active,
+  #send-btn:active:not(:disabled),
+  #menu-btn:focus-visible,
+  #send-btn:focus-visible {
+    background: var(--green);
+    color: var(--bg);
+    text-shadow: none;
+  }
+  /* second tap leaves the round: red warning */
+  #menu-btn.armed {
+    color: var(--red);
+    border-color: var(--red);
+    text-shadow: 0 0 5px rgba(255, 90, 60, 0.5);
+  }
+  #menu-btn.armed:active {
+    background: var(--red);
+    color: var(--bg);
+    text-shadow: none;
+  }
+  /* a token is selected: tap again to submit */
+  #send-btn.ready {
+    background: var(--green);
+    color: var(--bg);
+    border-color: var(--green);
+    text-shadow: none;
+  }
+  #send-btn:disabled {
+    color: var(--green-dim);
+    border-color: var(--green-dim);
+    text-shadow: none;
+    cursor: default;
+  }
+}
+
+/* Portrait (phone and tablet): stacked, full-bleed; wide, tall cells fill the width.
+   Re-applies the <=640px stacking, since a tablet is wider. ~52px reserved for the bar.
+   --fs uses svh (stable while Safari's toolbars collapse); the box keeps dvh to fill what is visible.
+   Safe-area insets are 0 without viewport-fit=cover. */
+@media (pointer: coarse) and (orientation: portrait) {
+  .crt {
+    --fs: clamp(11px, min(calc(100vw / 17),
+      calc((100svh - 52px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) / 36)), 34px);
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+  }
+  #terminal {
+    padding:
+      max(0.6em, env(safe-area-inset-top)) max(0.8em, env(safe-area-inset-right))
+      max(0.6em, env(safe-area-inset-bottom)) max(0.8em, env(safe-area-inset-left));
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  #main-area {
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0.6em;
+    overflow: hidden;
+  }
+  #grid-area { width: 100%; flex: 0 0 auto; gap: 1.5ch; }
+  .grid-column { flex: 1 1 0; min-width: 0; }
+  .grid-row { line-height: 1.25; }
+  .grid-content {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .cell {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 1ch;
+    max-width: 0.96em;   /* ~30px on a tablet; phones are width-limited well below this */
+  }
+  #side-panel { flex: 1 1 0; min-width: 0; width: 100%; min-height: 0; }
+  #history-log { min-height: 0; }
+  #diff-screen {
+    padding:
+      max(1em, env(safe-area-inset-top)) max(1.2em, env(safe-area-inset-right))
+      max(1em, env(safe-area-inset-bottom)) max(1.2em, env(safe-area-inset-left));
+    overflow-y: auto;
+  }
+  #end-screen {
+    padding:
+      max(1.5em, env(safe-area-inset-top)) max(2em, env(safe-area-inset-right))
+      max(1.5em, env(safe-area-inset-bottom)) max(2em, env(safe-area-inset-left));
+  }
+}
+
+/* Phone landscape: full-bleed, grid left / log + bar right, no scroll.
+   --fs from the height: 22em = header 1.5 + 17 rows x 1.2 + slack; 16px = padding */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  .crt {
+    --fs: clamp(10px, calc((100dvh - 16px) / 22), 34px);
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+  }
+  #header-title { display: none; }
+  #header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 2ch;
+    margin-bottom: 0.3em;
+  }
+  #header-sub {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #attempts-line { flex: 0 0 auto; margin-top: 0; }
+  #terminal {
+    padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+    overflow: hidden;
+  }
+  /* hint on its own line under >WORD (long words would clip it) */
+  .tap-hint { display: block; margin-left: 0; }
+  #main-area {
+    flex-direction: row;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 2.5ch;
+    overflow: hidden;
+  }
+  #grid-area {
+    flex: 0 1 35.4em;   /* 2 columns + gap (flex-basis: intrinsic sizes ignore cell flex) */
+    width: auto;
+    min-width: 0;
+    gap: 2.5ch;
+    align-items: flex-start;
+  }
+  .grid-column { flex: 1 1 0; min-width: 0; }
+  .grid-row { line-height: 1.2; gap: 1ch; }
+  .grid-content {
+    display: flex;
+    flex: 1 1 0;
+    max-width: 14.4em;   /* 12 cells x 1.2em cap */
+    min-width: 0;
+  }
+  .cell {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 1ch;
+    max-width: 1.2em;
+  }
+  #side-panel {
+    flex: 1 1 26ch;
+    min-width: 20ch;
+    width: auto;
+    min-height: 0;
+  }
+  #history-log { min-height: 0; }
+
+  /* menu / end: compact, two-column menu */
+  #diff-screen {
+    padding: 0.5em max(1em, env(safe-area-inset-right)) 0.5em max(1em, env(safe-area-inset-left));
+    overflow-y: auto;
+  }
+  #diff-sub { margin-bottom: 0.4em; }
+  #diff-prompt { margin-bottom: 0.3em; }
+  #diff-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.3em 1ch;
+    margin-bottom: 0.4em;
+  }
+  #end-screen {
+    padding: 0.5em max(1em, env(safe-area-inset-right)) 0.5em max(1em, env(safe-area-inset-left));
+    overflow-y: auto;
+  }
+  #end-title { margin-bottom: 0.4em; }
+  #end-msg { margin-bottom: 0.6em; }
 }
 
 /* ── REDUCED MOTION ──────────────────────────────────────────────────────── */

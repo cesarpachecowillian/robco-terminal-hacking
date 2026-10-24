@@ -1,5 +1,5 @@
 // Game flow: difficulty menu, boot sequence, starting a round.
-import { DIFF, menuLabel, ROWS, MSG_PROMPT, TYPE_HEADER_MS, BOOT_PAUSE_MS, BOOT_ROW_MS } from './config.js';
+import { DIFF, menuParts, ROWS, MSG_PROMPT, TYPE_HEADER_MS, BOOT_PAUSE_MS, BOOT_ROW_MS } from './config.js';
 import { $ } from './dom.js';
 import { createRound } from './grid.js';
 import { SEED, G, GEN, setG, setSkip } from './state.js';
@@ -8,6 +8,7 @@ import { buildDOM, renderAttempts } from './render.js';
 import { setCursor } from './cursor.js';
 import { typeEl, wait } from './anim.js';
 import { show, powerOn, resetUI } from './screens.js';
+import { keepAwake } from './wakelock.js';
 
 // ─── DIFFICULTY SCREEN ────────────────────────────────────────────────────────
 
@@ -15,8 +16,21 @@ import { show, powerOn, resetUI } from './screens.js';
 export let menuIdx = 0;
 let nextSeed = SEED;   // seed for the next game
 
+/** Appends a <span> with text (and optional class / hidden) to parent. */
+function span(parent, text, cls, hidden) {
+  const s = document.createElement('span');
+  if (cls) s.className = cls;
+  if (hidden) s.hidden = true;
+  s.textContent = text;
+  parent.appendChild(s);
+}
+
+// keyboard copy (desktop) + touch copy; CSS shows one of them
 function updateHint() {
-  $('diff-hint').textContent = '> TECLAS [1]–[5], SETAS + ENTER OU MOUSE  ·  [ESC] VOLTA AO MENU';
+  const h = $('diff-hint');
+  h.textContent = '';
+  span(h, '> TECLAS [1]–[5], SETAS + ENTER OU MOUSE  ·  [ESC] VOLTA AO MENU', 'kbd-only');
+  span(h, '> TOQUE EM UM NÍVEL PARA INICIAR', 'touch-only', true);
 }
 
 /**
@@ -42,7 +56,13 @@ export function showDifficultyScreen() {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'diff-option';
-    b.textContent = menuLabel(d, idx);
+    // textContent stays byte-identical to menuLabel(d, idx); touch hides key + padding
+    const p = menuParts(d, idx);
+    span(b, p.key + ' ', 'kbd-only');
+    span(b, p.name, 'opt-name');
+    span(b, p.pad, 'kbd-only');
+    b.appendChild(document.createTextNode(' '));
+    span(b, p.desc, 'opt-desc');
     b.addEventListener('mouseenter', () => { if (G.state === 'MENU') { const nw = idx !== menuIdx; setMenuIdx(idx, true); if (nw) play('hover'); } });
     b.addEventListener('click', () => chooseDiff(d));
     list.appendChild(b);
@@ -83,6 +103,7 @@ async function bootSequence(gen) {
 
   setSkip(false);
   G.state = 'PLAYING';
+  keepAwake();
   setCursor(0, 0, { quiet: true });
   $('terminal').focus({ preventScroll: true });
 }

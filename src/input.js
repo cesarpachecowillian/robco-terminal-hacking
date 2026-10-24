@@ -1,10 +1,12 @@
 // Input handling: keyboard, pointer, grid mouse/touch, end-screen buttons.
-import { DIFF } from './config.js';
+import { DIFF, COLS } from './config.js';
 import { $ } from './dom.js';
 import { G, setSkip } from './state.js';
 import { ensureAudio, play } from './audio.js';
-import { setCursor, moveCursor } from './cursor.js';
+import { setCursor, moveCursor, syncTouchUI } from './cursor.js';
 import { submit } from './actions.js';
+import { notePointer, buzz } from './haptics.js';
+import { arm, disarm } from './touchbar.js';
 import { menuIdx, setMenuIdx, chooseDiff, startGame, showDifficultyScreen } from './flow.js';
 
 const MOD_KEYS = ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'NumLock', 'ScrollLock', 'AltGraph', 'OS'];
@@ -60,7 +62,9 @@ function onKeyDown(e) {
 function onPointerDown(e) {
   ensureAudio();
   lastPtr = e.pointerType || 'mouse';
-  if (skipping()) {
+  notePointer(lastPtr);
+  const onBar = G.state === 'BOOT' && e.target.closest && e.target.closest('#touch-bar');   // MENU must work during boot
+  if (skipping() && !onBar) {
     setSkip(true);
     suppressNextClick = true;
     e.preventDefault();
@@ -99,12 +103,55 @@ export function bindGridInput() {
     if (G.state !== 'PLAYING') return;
     const sp = e.target.closest && e.target.closest('.cell');
     if (!sp) return;
-    setCursor(+sp.dataset.c, +sp.dataset.i);
-    if (lastPtr === 'touch') {   // first tap selects, second tap on same token submits
-      if (G.tapKey !== G.tok.key) { G.tapKey = G.tok.key; return; }
+    disarm();
+    const c = +sp.dataset.c;
+    const touch = lastPtr === 'touch';
+    setCursor(c, touch ? snapCell(c, +sp.dataset.i) : +sp.dataset.i);
+    if (touch) {   // first tap selects, second tap on same token submits
+      if (G.tapKey !== G.tok.key) {
+        G.tapKey = G.tok.key; buzz('select'); syncTouchUI(); return;
+      }
       G.tapKey = null;
     }
     submit();
+    syncTouchUI();
+  });
+}
+
+/**
+ * Touch only: a tap on junk / a removed dud next to a live word or bracket (same column and
+ * visual row, index i-1 / i+1) snaps to it. A word wins over a bracket, then i+1. Applied on every tap, so the
+ * second tap lands on the same token as the first.
+ * @param {number} c
+ * @param {number} i
+ * @returns {number} cell index to use
+ */
+function snapCell(c, i) {
+  const col = G.cols[c];
+  if (col[i].type !== 'junk' && col[i].type !== 'dud') return i;
+  const near = [i + 1, i - 1].filter(k => k >= 0 && k < col.length && Math.floor(k / COLS) === Math.floor(i / COLS));
+  const hit = near.find(k => col[k].type === 'word') ?? near.find(k => col[k].type === 'bracket');
+  return hit === undefined ? i : hit;
+}
+
+/** Touch bar: MENU (tap twice within MENU_ARM_MS to leave the round) and ENVIAR (submit). */
+export function bindTouchBar() {
+  const menu = $('menu-btn'), send = $('send-btn');
+  if (!menu || !send) return;
+  menu.addEventListener('click', () => {
+    if (G.state !== 'BOOT' && G.state !== 'PLAYING') return;
+    if (menu.classList.contains('armed')) {
+      disarm();
+      showDifficultyScreen();   // same as ESC
+      return;
+    }
+    arm();
+    play('hover');
+  });
+  send.addEventListener('click', () => {
+    disarm();
+    submit();
+    syncTouchUI();
   });
 }
 

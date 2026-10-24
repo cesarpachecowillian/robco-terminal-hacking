@@ -4,8 +4,10 @@ import { rnd, pick } from './rng.js';
 import { likeness, range } from './util.js';
 import { G, GEN } from './state.js';
 import { play } from './audio.js';
+import { buzz } from './haptics.js';
+import { releaseAwake } from './wakelock.js';
 import { paintCell, renderAttempts, renderAlert, flickerAttempts } from './render.js';
-import { unhl, refreshCursor } from './cursor.js';
+import { unhl, refreshCursor, syncTouchUI } from './cursor.js';
 import { logLine, flushLog } from './log.js';
 import { endSequence } from './end.js';
 
@@ -17,6 +19,7 @@ export function submit() {
   if (t.kind === 'word') guessWord(t.ref);
   else if (t.kind === 'bracket') useBracket(t.ref);
   else play('enter');
+  syncTouchUI();
 }
 
 /** @param {import('./grid.js').Word} w */
@@ -27,8 +30,9 @@ export function guessWord(w) {
 
   if (w.text === G.secret) {
     G.state = 'WON';
+    releaseAwake();
     ['>Senha aceita.', '>Autenticando...', '>Acesso liberado.'].forEach(logLine);
-    play('granted');
+    play('granted'); buzz('granted');
     endSequence('won');
     return;
   }
@@ -41,10 +45,11 @@ export function guessWord(w) {
   flickerAttempts(GEN);
   if (G.attempts <= 0) {
     G.state = 'LOST';
-    play('locked');
+    releaseAwake();
+    play('locked'); buzz('locked');
     endSequence('lost');
   } else {
-    play('denied');
+    play('denied'); buzz('denied');
     renderAlert();
   }
 }
@@ -62,7 +67,7 @@ export function useBracket(br) {
   const duds = G.words.filter(w => !w.removed && w.text !== G.secret);
   const replenish = () => {
     G.attempts = G.max; G.replUsed = true;
-    play('replenish');
+    play('replenish'); buzz('replenish');
     renderAttempts(); renderAlert();
     logLine('>Tentativas restauradas.');
   };
@@ -74,12 +79,12 @@ export function useBracket(br) {
     const w = pick(fresh.length ? fresh : duds);
     w.removed = true;
     range(w.start, w.text.length).forEach(i => { G.cols[w.col][i] = { type: 'dud', ch: '.' }; paintCell(w.col, i); });
-    play('dud');
+    play('dud'); buzz('dud');
     logLine('>Resíduo removido.');
   } else if (G.attempts < G.max) {
     replenish();
   } else {
-    play('dud');
+    play('dud'); buzz('dud');
     logLine('>Resíduo removido.');
   }
   refreshCursor();

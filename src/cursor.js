@@ -33,7 +33,25 @@ export function setCursor(c, i, opt = {}) {
   G.tok = tok;
   hl(tok, true);
   setInput(tok.text);
+  syncTouchUI();
   if (!opt.quiet) play(opt.snd || 'hover');
+}
+
+/** Touch bar + tap hint follow the selection (all lookups are null-safe). */
+export function syncTouchUI() {
+  const send = $('send-btn');
+  const t = G.tok;
+  const live = G.state === 'PLAYING' && !!t && (t.kind === 'word' || t.kind === 'bracket');
+  const armed = live && G.tapKey === t.key;   // first tap done, second confirms
+  if (send) {
+    send.disabled = !live;
+    if (send.classList) send.classList.toggle('ready', armed);
+  }
+  const hint = document.querySelector('.tap-hint');
+  if (hint) {
+    hint.textContent = armed ? 'TOQUE DE NOVO' : '';
+    hint.hidden = !armed;
+  }
 }
 
 /** Clears the current highlight and token (call before mutating cells). */
