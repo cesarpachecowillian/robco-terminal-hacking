@@ -2,3 +2,12 @@ Dockerfile
 docker-compose.yml
 .dockerignore
 *.md
+.git
+.gitignore
+.gitattributes
+.editorconfig
+.claude
+tests/
+node_modules/
+package.json
+bun.lock*
