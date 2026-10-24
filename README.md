@@ -7,6 +7,8 @@ senha certa entre palavras escondidas num dump de memória, usando as dicas de
 Feito em **JavaScript puro (ES modules)**, sem frameworks e sem etapa de build.
 A interface é em português; as palavras do dump são em inglês.
 
+**Jogue online:** https://cesarpachecowillian.github.io/robco-terminal-hacking/
+
 ## Como jogar
 
 1. Escolha um nível de acesso (dificuldade). O terminal liga e exibe duas
@@ -57,6 +59,10 @@ página. Mudanças em `src/`, `index.html` ou `styles.css` exigem `--build`.
 python -m http.server 8000
 # http://localhost:8000
 ```
+
+**Publicação:** cada push na `main` dispara o workflow
+`.github/workflows/pages.yml`, que roda `bun test` e, se passar, publica no
+GitHub Pages apenas `index.html`, `styles.css`, `src/` e `sounds/`.
 
 ## Sons
 
