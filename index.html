@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RobCo Termlink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="crt" id="screen">
+    <div class="crt-fx"></div>
+    <div class="crt-poweron"></div>
+
+    <!-- Difficulty selection (shows first) -->
+    <section id="diff-screen" class="screen active">
+      <div id="diff-brand">ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL</div>
+      <div id="diff-sub">SISTEMA DE AUTENTICAÇÃO POR SENHA · VERSÃO 3.1</div>
+      <div id="diff-prompt">SELECIONE O NÍVEL DE ACESSO:</div>
+      <div id="diff-list"></div>
+      <div id="diff-hint"></div>
+    </section>
+
+    <!-- Game terminal -->
+    <section id="terminal" class="screen" tabindex="0">
+      <div id="header">
+        <div id="header-title"></div>
+        <div id="header-sub"></div>
+        <div id="attempts-line"></div>
+      </div>
+
+      <div id="main-area">
+        <div id="grid-area" aria-hidden="true">
+          <div id="column-a" class="grid-column"></div>
+          <div id="column-b" class="grid-column"></div>
+        </div>
+
+        <div id="side-panel">
+          <div id="history-log"></div>
+          <div id="input-line">&gt;<span class="cursor"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Win / lockout screen -->
+    <section id="end-screen" class="screen">
+      <div id="end-title"></div>
+      <div id="end-msg"></div>
+      <div id="end-btns">
+        <button id="restart-btn" type="button">[R] REINICIAR</button>
+        <button id="diff-btn" type="button">[D] DIFICULDADE</button>
+      </div>
+    </section>
+
+    <div id="sr-live" class="visually-hidden" aria-live="polite"></div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>

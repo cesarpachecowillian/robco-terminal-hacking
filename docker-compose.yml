@@ -1,0 +1,8 @@
+services:
+  terminal:
+    build: .
+    ports:
+      - "8083:80"
+    restart: unless-stopped
+    volumes:
+      - "./sounds:/usr/share/nginx/html/sounds:ro"
